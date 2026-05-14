@@ -1,3 +1,4 @@
+# ─── Python ───────────────────────────────────────────────────
 venv/
 __pycache__/
 *.py[cod]
@@ -8,3 +9,36 @@ env/
 ENV/
 env.bak/
 venv.bak/
+*.egg-info/
+dist/
+build/
+
+# ─── Veri Seti (büyük dosyalar) ───────────────────────────────
+data/raw/*.csv
+data/raw/*.zip
+data/raw/*.gz
+data/processed/
+
+# ─── Model dosyaları ──────────────────────────────────────────
+models/saved_model/
+models/tf_model/
+models/roberta_saved_model/
+models/logistic_regression/
+models/decision_tree/
+models/**/*.pt
+models/**/*.pkl
+models/**/*.onnx
+models/**/*.tflite
+
+# ─── Çıktılar ─────────────────────────────────────────────────
+outputs/
+
+# ─── IDE & OS ─────────────────────────────────────────────────
+.idea/
+.vscode/
+*.DS_Store
+Thumbs.db
+
+# ─── Jupyter ──────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb

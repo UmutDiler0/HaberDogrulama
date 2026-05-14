@@ -1,0 +1,5 @@
+# TFLite export için ek bağımlılıklar
+# (eğitim tamamlandıktan SONRA kur)
+onnx>=1.16.0
+onnx-tf>=1.10.0
+tensorflow>=2.15.0
