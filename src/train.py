@@ -27,8 +27,8 @@ from src.model import FakeNewsClassifier
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
-# Ekran kartı varsa (CUDA) onu, yoksa CPU'yu kullan
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Ekran kartı (CUDA) uyumsuzluğundan dolayı CPU'yu kullan
+DEVICE = torch.device("cpu")
 
 
 # ─── Yardımcı Fonksiyonlar ───────────────────────────────────────────────────

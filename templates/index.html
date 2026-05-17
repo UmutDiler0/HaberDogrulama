@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yapay Zeka Destekli Haber Doğrulama Merkezi</title>
+    <meta name="description" content="Sahte haberleri derin öğrenme ve makine öğrenmesi modelleriyle tespit edin.">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <div class="logo-icon"></div>
+                <h1>Haber Doğrulama</h1>
+            </div>
+            <ul class="nav-links">
+                <li><button class="nav-btn active" data-target="test-section">Haber Analizi</button></li>
+                <li><button class="nav-btn" data-target="dashboard-section">Model Dashboard</button></li>
+                <li><button class="nav-btn" data-target="history-section">Geçmiş Analizler</button></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="content">
+            
+            <!-- TEST SECTION -->
+            <section id="test-section" class="tab-content active">
+                <header>
+                    <h2>Haber Analizi</h2>
+                    <p>Mevcut bir haber metnini girin ve doğruluk payını seçtiğiniz yapay zeka modeliyle analiz edin.</p>
+                </header>
+
+                <div class="glass-card form-card">
+                    <form id="prediction-form">
+                        <div class="form-group">
+                            <label for="model_type">Analiz Modeli</label>
+                            <select id="model_type" name="model_type">
+                                <option value="roberta">RoBERTa (En Güçlü Derin Öğrenme)</option>
+                                <option value="distilbert">DistilBERT (Hızlı Derin Öğrenme)</option>
+                                <option value="lr">Logistic Regression (Geleneksel ML)</option>
+                                <option value="dt">Decision Tree (Karar Ağacı - Düşük Başarı)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="title">Haber Başlığı (Opsiyonel)</label>
+                            <input type="text" id="title" name="title" placeholder="Haber başlığını buraya girin...">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="text">Haber Metni (Zorunlu)</label>
+                            <textarea id="text" name="text" rows="8" placeholder="Doğruluğunu teyit etmek istediğiniz haber metnini buraya yapıştırın..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="primary-btn" id="analyze-btn">
+                            <span class="btn-text">Analiz Et</span>
+                            <div class="spinner hidden"></div>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Result Container -->
+                <div id="result-container" class="glass-card result-card hidden">
+                    <h3 class="result-title">Analiz Sonucu</h3>
+                    <div class="result-badge" id="result-badge">
+                        Gerçek Haber
+                    </div>
+                    <div class="confidence-container">
+                        <p>Güven Skoru: <span id="confidence-score">%0</span></p>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                    </div>
+                    <div class="details" id="result-details">
+                        <!-- Probabilities -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- DASHBOARD SECTION -->
+            <section id="dashboard-section" class="tab-content">
+                <header>
+                    <h2>Model Dashboard</h2>
+                    <p>Önceki eğitimlerde elde edilmiş model performans metrikleri ve karmaşıklık matrisi grafikleri.</p>
+                </header>
+
+                <div class="dashboard-grid">
+                    <!-- RoBERTa Card -->
+                    <div class="glass-card dash-card">
+                        <h3>RoBERTa Modeli</h3>
+                        <div class="image-wrapper">
+                            <!-- Backend'deki /figures klasöründen -->
+                            <img src="/figures/confusion_matrix_roberta.png" alt="RoBERTa Confusion Matrix" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyYWZpayBCdWx1bmFtYWTEsTwvdGV4dD48L3N2Zz4='">
+                        </div>
+                        <p class="desc">Transformer Tabanlı Gelişmiş Model</p>
+                    </div>
+
+                    <!-- DistilBERT Card -->
+                    <div class="glass-card dash-card">
+                        <h3>DistilBERT Modeli</h3>
+                        <div class="image-wrapper">
+                            <img src="/figures/confusion_matrix.png" alt="DistilBERT Confusion Matrix" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyYWZpayBCdWx1bmFtYWTEsTwvdGV4dD48L3N2Zz4='">
+                        </div>
+                        <p class="desc">Hızlı ve Etkili Transformer Modeli</p>
+                    </div>
+
+                    <!-- Logistic Regression Card -->
+                    <div class="glass-card dash-card">
+                        <h3>Logistic Regression</h3>
+                        <div class="image-wrapper">
+                            <img src="/figures/confusion_matrix_lr.png" alt="LR Confusion Matrix" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyYWZpayBCdWx1bmFtYWTEsTwvdGV4dD48L3N2Zz4='">
+                        </div>
+                        <p class="desc">Geleneksel Makine Öğrenmesi</p>
+                    </div>
+
+                    <!-- Decision Tree Card -->
+                    <div class="glass-card dash-card">
+                        <h3>Decision Tree</h3>
+                        <div class="image-wrapper">
+                            <img src="/figures/confusion_matrix_dt.png" alt="Decision Tree Confusion Matrix" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyYWZpayBCdWx1bmFtYWTEsTwvdGV4dD48L3N2Zz4='">
+                        </div>
+                        <p class="desc">Zayıf Sınıflandırıcı (Kıyaslama Amaçlı)</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- HISTORY SECTION -->
+            <section id="history-section" class="tab-content">
+                <header>
+                    <h2>Geçmiş Analizler</h2>
+                    <p>Önceden analiz ettiğiniz haberlerin veritabanı kayıtları ve istatistikleri.</p>
+                </header>
+
+                <!-- Charts Container -->
+                <div class="charts-container">
+                    <div class="glass-card chart-card">
+                        <h3>Genel Analiz Dağılımı</h3>
+                        <div class="canvas-wrapper">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card chart-card">
+                        <h3>Model Kullanım İstatistikleri</h3>
+                        <div class="canvas-wrapper">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- History Table -->
+                <div class="glass-card table-card">
+                    <div class="table-responsive">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Model</th>
+                                    <th>Haber Başlığı</th>
+                                    <th>Sonuç</th>
+                                    <th>Güven Skoru</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body">
+                                <!-- Data will be populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

@@ -27,7 +27,7 @@ from src.dataset import WELFakeDataset
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cpu")
 
 # RoBERTa için Özel Dizinler
 ROBERTA_MODEL_NAME = "roberta-base"

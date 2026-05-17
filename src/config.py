@@ -51,5 +51,5 @@ DROPOUT_RATE  = 0.3
 # Kullanılacak ön-eğitimli model (HuggingFace Hub)
 PRETRAINED_MODEL = "distilbert-base-uncased"
 
-# ─── Etiket Haritası ─────────────────────────────────────────────────────────
-LABEL_MAP = {0: "SAHTE", 1: "GERÇEK"}
+# WELFake orijinal veri setinde 1=Fake (Sahte), 0=Real (Gerçek) kabul edilir
+LABEL_MAP = {0: "GERÇEK", 1: "SAHTE"}

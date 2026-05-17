@@ -1,14 +1,12 @@
 """
-Test seti üzerinde model değerlendirmesi.
+Test seti üzerinde RoBERTa model değerlendirmesi.
 Accuracy, Precision, Recall, F1 ve Confusion Matrix raporlanır.
 
 Kullanım:
-    python -m src.evaluate
+    python -m src.evaluate_roberta
 """
 import logging
-
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 from sklearn.metrics import (
     classification_report,
@@ -16,30 +14,31 @@ from sklearn.metrics import (
     ConfusionMatrixDisplay,
 )
 from torch.utils.data import DataLoader
-from transformers import DistilBertTokenizerFast
+from transformers import AutoTokenizer
 
 from src.config import (
-    TEST_CSV, MODEL_SAVE_DIR, TOKENIZER_DIR,
-    BATCH_SIZE, MAX_SEQ_LEN, LABEL_MAP, FIGURES_DIR,
+    TEST_CSV, BATCH_SIZE, MAX_SEQ_LEN, LABEL_MAP, FIGURES_DIR,
 )
 from src.dataset import WELFakeDataset
-from src.model import FakeNewsClassifier
+from src.train_roberta import RobertaFakeNewsClassifier, ROBERTA_SAVE_DIR, ROBERTA_TOKENIZER_DIR
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 DEVICE = torch.device("cpu")
 
-
 def main():
+    logger.info("=== RoBERTa Test Süreci Başlıyor ===")
     # Tokenizer & Dataset
-    tokenizer = DistilBertTokenizerFast.from_pretrained(str(TOKENIZER_DIR))
+    tokenizer = AutoTokenizer.from_pretrained(str(ROBERTA_TOKENIZER_DIR))
     test_ds   = WELFakeDataset(TEST_CSV, tokenizer, MAX_SEQ_LEN)
     test_loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
 
     # Model yükle
-    model = FakeNewsClassifier().to(DEVICE)
-    ckpt  = MODEL_SAVE_DIR / "best_model.pt"
+    model = RobertaFakeNewsClassifier().to(DEVICE)
+    ckpt  = ROBERTA_SAVE_DIR / "roberta_best_model.pt"
+    
+    # Eğitilmiş ağırlıkları yükle
     model.load_state_dict(torch.load(ckpt, map_location=DEVICE))
     model.eval()
     logger.info(f"Model yüklendi: {ckpt}")
@@ -61,19 +60,19 @@ def main():
     # Rapor
     target_names = [LABEL_MAP[k] for k in sorted(LABEL_MAP)]
     report = classification_report(all_labels, all_preds, target_names=target_names)
-    logger.info(f"\nSınıflandırma Raporu:\n{report}")
+    logger.info(f"\nSınıflandırma Raporu (RoBERTa):\n{report}")
 
     # Confusion Matrix görseli
     FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     cm  = confusion_matrix(all_labels, all_preds)
     disp = ConfusionMatrixDisplay(cm, display_labels=target_names)
     fig, ax = plt.subplots(figsize=(6, 5))
-    disp.plot(ax=ax, colorbar=False, cmap="Blues")
-    ax.set_title("Confusion Matrix — WELFake Test Seti")
-    fig_path = FIGURES_DIR / "confusion_matrix.png"
+    disp.plot(ax=ax, colorbar=False, cmap="Purples") # RoBERTa için mor renk tonu
+    ax.set_title("Confusion Matrix — RoBERTa (Test Seti)")
+    
+    fig_path = FIGURES_DIR / "confusion_matrix_roberta.png"
     fig.savefig(fig_path, dpi=150, bbox_inches="tight")
     logger.info(f"Confusion matrix kaydedildi → {fig_path}")
-
 
 if __name__ == "__main__":
     main()
