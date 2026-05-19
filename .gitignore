@@ -25,6 +25,7 @@ models/tf_model/
 models/roberta_saved_model/
 models/logistic_regression/
 models/decision_tree/
+models/backup_*/
 models/**/*.pt
 models/**/*.pkl
 models/**/*.onnx

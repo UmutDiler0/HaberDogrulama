@@ -446,3 +446,119 @@ textarea {
 }
 .badge-fake { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
 .badge-real { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+
+/* --- Multi-Model Results Grid & Cards --- */
+.multi-results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.model-result-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    padding: 1.75rem 1.5rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.25rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.model-result-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.35);
+}
+
+.model-result-card.fake-card {
+    border-color: rgba(239, 68, 68, 0.15);
+}
+
+.model-result-card.fake-card:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 15px 30px rgba(239, 68, 68, 0.15);
+}
+
+.model-result-card.real-card {
+    border-color: rgba(16, 185, 129, 0.15);
+}
+
+.model-result-card.real-card:hover {
+    border-color: rgba(16, 185, 129, 0.4);
+    box-shadow: 0 15px 30px rgba(16, 185, 129, 0.15);
+}
+
+.model-name-title {
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.model-badge {
+    display: inline-block;
+    padding: 0.5rem 1.5rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.model-badge.fake {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.model-badge.real {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.model-progress-container {
+    width: 100%;
+}
+
+.model-progress-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 500;
+}
+
+.model-progress-bar {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.model-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--primary-color);
+    transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.model-progress-fill.fake-fill {
+    background: var(--danger);
+}
+
+.model-progress-fill.real-fill {
+    background: var(--success);
+}

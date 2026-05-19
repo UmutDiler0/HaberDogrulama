@@ -154,7 +154,40 @@ def api_predict():
         return jsonify({"error": "Metin (text) alanı zorunludur."}), 400
         
     try:
-        if model_type == "dt":
+        if model_type == "all":
+            results = {}
+            for m_type in ["roberta", "distilbert", "lr", "dt"]:
+                if m_type == "dt":
+                    m, v = load_dt()
+                    res = predict_ml(title, text, m, v)
+                elif m_type == "lr":
+                    m, v = load_lr()
+                    res = predict_ml(title, text, m, v)
+                elif m_type == "distilbert":
+                    m, v = load_distilbert()
+                    res = predict_dl(title, text, m, v)
+                elif m_type == "roberta":
+                    m, v = load_roberta()
+                    res = predict_dl(title, text, m, v)
+                
+                results[m_type] = res
+                
+                # Veritabanına Kaydet
+                try:
+                    conn = sqlite3.connect('history.db')
+                    c = conn.cursor()
+                    c.execute(
+                        "INSERT INTO predictions (timestamp, model_type, title, label, confidence) VALUES (?, ?, ?, ?, ?)",
+                        (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), m_type, title if title else "Başlıksız", res["label"], res["confidence"])
+                    )
+                    conn.commit()
+                    conn.close()
+                except Exception as db_err:
+                    print("DB Error:", db_err)
+            
+            return jsonify({"is_all": True, "results": results})
+
+        elif model_type == "dt":
             m, v = load_dt()
             res = predict_ml(title, text, m, v)
         elif model_type == "lr":

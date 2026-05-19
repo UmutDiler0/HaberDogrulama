@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultBadge = document.getElementById('result-badge');
     const confidenceScore = document.getElementById('confidence-score');
     const progressFill = document.getElementById('progress-fill');
+    const multiResultContainer = document.getElementById('multi-result-container');
+    const multiResultsGrid = document.getElementById('multi-results-grid');
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -48,47 +50,133 @@ document.addEventListener('DOMContentLoaded', () => {
         spinner.classList.remove('hidden');
         analyzeBtn.disabled = true;
         resultContainer.classList.add('hidden');
+        if (multiResultContainer) {
+            multiResultContainer.classList.add('hidden');
+            multiResultsGrid.innerHTML = '';
+        }
         progressFill.style.width = '0%'; // reset bar
 
         try {
-            const response = await fetch('/api/predict', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            });
+            if (requestData.model_type === 'all') {
+                const models = ['roberta', 'distilbert', 'lr', 'dt'];
+                const modelNames = {
+                    roberta: 'RoBERTa',
+                    distilbert: 'DistilBERT',
+                    lr: 'Logistic Regression',
+                    dt: 'Decision Tree'
+                };
 
-            const data = await response.json();
+                multiResultsGrid.innerHTML = '';
 
-            if (!response.ok) {
-                alert('Hata: ' + (data.error || 'Bilinmeyen bir hata oluştu.'));
-                return;
+                // Hepsine aynı anda istek gönder (Parallel Requests)
+                const promises = models.map(mKey => 
+                    fetch('/api/predict', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model_type: mKey,
+                            title: requestData.title,
+                            text: requestData.text
+                        })
+                    }).then(async (res) => {
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || `${modelNames[mKey]} hatası`);
+                        return { mKey, data };
+                    })
+                );
+
+                // Tüm sonuçların tamamlanmasını paralel olarak bekle
+                const resultsList = await Promise.all(promises);
+                
+                // Sonuç listesini eşleşen anahtarlara göre nesneye dönüştür
+                const resultsObj = {};
+                resultsList.forEach(item => {
+                    resultsObj[item.mKey] = item.data;
+                });
+
+                // Kartları tek seferde oluştur ve göster
+                const order = ['roberta', 'distilbert', 'lr', 'dt'];
+                order.forEach(mKey => {
+                    const res = resultsObj[mKey];
+                    if (!res) return;
+                    
+                    const isFake = res.label.toLowerCase().includes('sahte');
+                    const cardClass = isFake ? 'model-result-card fake-card' : 'model-result-card real-card';
+                    const badgeClass = isFake ? 'model-badge fake' : 'model-badge real';
+                    const fillClass = isFake ? 'model-progress-fill fake-fill' : 'model-progress-fill real-fill';
+
+                    const card = document.createElement('div');
+                    card.className = cardClass;
+                    card.innerHTML = `
+                        <div class="model-name-title">${modelNames[mKey]}</div>
+                        <div class="${badgeClass}">${res.label.toUpperCase()}</div>
+                        <div class="model-progress-container" style="width: 100%;">
+                            <div class="model-progress-label">
+                                <span>Güven Skoru</span>
+                                <span>%${res.confidence}</span>
+                            </div>
+                            <div class="model-progress-bar">
+                                <div class="model-progress-fill ${fillClass}" id="fill-${mKey}" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    `;
+                    multiResultsGrid.appendChild(card);
+                });
+
+                multiResultContainer.classList.remove('hidden');
+
+                // Güven barlarını doldur
+                setTimeout(() => {
+                    order.forEach(mKey => {
+                        const res = resultsObj[mKey];
+                        if (!res) return;
+                        const fillEl = document.getElementById(`fill-${mKey}`);
+                        if (fillEl) {
+                            fillEl.style.width = `${res.confidence}%`;
+                        }
+                    });
+                }, 100);
+
+            } else {
+                // Tekli model tahmini (Mevcut mantık)
+                const response = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    alert('Hata: ' + (data.error || 'Bilinmeyen bir hata oluştu.'));
+                    return;
+                }
+
+                const isFake = data.label.toLowerCase().includes("sahte");
+
+                resultBadge.textContent = data.label.toUpperCase();
+                resultBadge.className = 'result-badge ' + (isFake ? 'fake' : 'real');
+                
+                confidenceScore.textContent = `%${data.confidence}`;
+                
+                progressFill.className = 'progress-fill ' + (isFake ? 'fake-fill' : 'real-fill');
+                
+                resultContainer.classList.remove('hidden');
+
+                // Güven barını yumuşakça doldur
+                setTimeout(() => {
+                    progressFill.style.width = `${data.confidence}%`;
+                }, 100);
             }
-
-            // Display Results
-            // Gelen veri örneği: { label: "Sahte", confidence: 95.5, probs: {"Sahte": 95.5, "Gerçek": 4.5} }
-            
-            const isFake = data.label.toLowerCase().includes("sahte");
-
-            resultBadge.textContent = data.label.toUpperCase();
-            resultBadge.className = 'result-badge ' + (isFake ? 'fake' : 'real');
-            
-            confidenceScore.textContent = `%${data.confidence}`;
-            
-            progressFill.className = 'progress-fill ' + (isFake ? 'fake-fill' : 'real-fill');
-            
-            resultContainer.classList.remove('hidden');
-
-            // Animate progress bar slightly after making it visible
-            setTimeout(() => {
-                progressFill.style.width = `${data.confidence}%`;
-            }, 100);
 
         } catch (error) {
             alert('Sunucuyla bağlantı kurulamadı: ' + error.message);
         } finally {
-            // Restore UI
+            // UI Durumunu Geri Al
             btnText.textContent = 'Analiz Et';
             spinner.classList.add('hidden');
             analyzeBtn.disabled = false;

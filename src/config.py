@@ -42,14 +42,16 @@ TEST_RATIO  = 0.10
 RANDOM_SEED = 42
 
 # ─── Model Hiper-Parametreleri ────────────────────────────────────────────────
-MAX_SEQ_LEN   = 256       # Token sayısı üst sınırı
+MAX_SEQ_LEN   = 128       # 256→128: Attention O(n²) olduğu için ~4x hız kazancı, doğruluk kaybı minimumdur
 BATCH_SIZE    = 32
-EPOCHS        = 5
+EPOCHS        = 3         # 5'ten 3'e indirildi — transformer modelleri için 2-3 epoch yeterli
 LEARNING_RATE = 2e-5
-DROPOUT_RATE  = 0.3
+DROPOUT_RATE  = 0.4       # 0.3'ten 0.4'e yükseltildi — daha fazla regularization
 
 # Kullanılacak ön-eğitimli model (HuggingFace Hub)
 PRETRAINED_MODEL = "distilbert-base-uncased"
 
-# WELFake orijinal veri setinde 1=Fake (Sahte), 0=Real (Gerçek) kabul edilir
+# WELFake orijinal veri setinde 0 = Gerçek (Real), 1 = Sahte (Fake) kabul edilir
 LABEL_MAP = {0: "GERÇEK", 1: "SAHTE"}
+
+

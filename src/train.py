@@ -27,8 +27,8 @@ from src.model import FakeNewsClassifier
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
-# Ekran kartı (CUDA) uyumsuzluğundan dolayı CPU'yu kullan
-DEVICE = torch.device("cpu")
+# Eğer CUDA (GPU) aktifse ekran kartını kullan, yoksa CPU ile devam et
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # ─── Yardımcı Fonksiyonlar ───────────────────────────────────────────────────
@@ -110,8 +110,28 @@ def main():
     logger.info("Yapay zeka modeli (DistilBERT) yükleniyor / indiriliyor (Yaklaşık 260 MB)...")
     model = FakeNewsClassifier().to(DEVICE)
 
-    # Optimizer & Scheduler
-    optimizer = AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=0.01)
+    # ─── Layer Freeze: Hız için ilk katmanları dondur ─────────────────────────
+    # DistilBERT'in embedding + ilk 4 transformer bloğunu dondur.
+    # Sadece son 2 blok (layer.4, layer.5) + classifier eğitilir.
+    # Bu sayede ~2-3x hız kazancı sağlanır, doğruluk kaybı minimumdur.
+    for param in model.bert.embeddings.parameters():
+        param.requires_grad = False
+    for i, block in enumerate(model.bert.transformer.layer):
+        if i < 4:   # 0,1,2,3 → dondur | 4,5 → eğit
+            for param in block.parameters():
+                param.requires_grad = False
+
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    total     = sum(p.numel() for p in model.parameters())
+    logger.info(f"Eğitilecek parametre: {trainable:,} / {total:,} ({100*trainable/total:.1f}%)")
+
+
+    # Optimizer — sadece eğitilecek (requires_grad=True) parametreler
+    optimizer = AdamW(
+        filter(lambda p: p.requires_grad, model.parameters()),
+        lr=LEARNING_RATE,
+        weight_decay=0.05
+    )
     total_steps  = len(train_loader) * EPOCHS
     warmup_steps = int(0.1 * total_steps)
     scheduler = get_linear_schedule_with_warmup(
@@ -122,6 +142,10 @@ def main():
     # ─── Eğitim Döngüsü ──────────────────────────────────────────────────────
     best_val_loss = float("inf")
     MODEL_SAVE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Early Stopping parametreleri
+    patience       = 2   # Val loss kaç epoch üst üste artarsa eğitimi durdur
+    patience_count = 0
 
     for epoch in range(1, EPOCHS + 1):
         train_loss, train_acc = train_epoch(model, train_loader, optimizer, scheduler, criterion, epoch)
@@ -134,10 +158,17 @@ def main():
         )
 
         if val_loss < best_val_loss:
-            best_val_loss = val_loss
+            best_val_loss  = val_loss
+            patience_count = 0
             ckpt_path = MODEL_SAVE_DIR / "best_model.pt"
             torch.save(model.state_dict(), ckpt_path)
             logger.info(f"  ✅ En iyi model kaydedildi → {ckpt_path}")
+        else:
+            patience_count += 1
+            logger.info(f"  ⚠️  Val loss iyileşmedi ({patience_count}/{patience})")
+            if patience_count >= patience:
+                logger.info("  🛑 Early stopping devreye girdi — eğitim erken sonlandırılıyor.")
+                break
 
     logger.info("🎉 Eğitim tamamlandı.")
 

@@ -27,7 +27,8 @@ from src.dataset import WELFakeDataset
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-DEVICE = torch.device("cpu")
+# Eğer CUDA (GPU) aktifse ekran kartını kullan, yoksa CPU ile devam et
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # RoBERTa için Özel Dizinler
 ROBERTA_MODEL_NAME = "roberta-base"
@@ -122,7 +123,7 @@ def main():
     logger.info("Yapay zeka modeli (RoBERTa-base) yükleniyor (Yaklaşık 500 MB)...")
     model = RobertaFakeNewsClassifier().to(DEVICE)
 
-    optimizer = AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=0.01)
+    optimizer = AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=0.05)  # 0.01 → 0.05: daha güçlü L2 regularization
     total_steps  = len(train_loader) * EPOCHS
     warmup_steps = int(0.1 * total_steps)
     scheduler = get_linear_schedule_with_warmup(
@@ -132,6 +133,10 @@ def main():
 
     best_val_loss = float("inf")
     ROBERTA_SAVE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Early Stopping parametreleri
+    patience       = 2
+    patience_count = 0
 
     for epoch in range(1, EPOCHS + 1):
         train_loss, train_acc = train_epoch(model, train_loader, optimizer, scheduler, criterion, epoch)
@@ -144,10 +149,17 @@ def main():
         )
 
         if val_loss < best_val_loss:
-            best_val_loss = val_loss
+            best_val_loss  = val_loss
+            patience_count = 0
             ckpt_path = ROBERTA_SAVE_DIR / "roberta_best_model.pt"
             torch.save(model.state_dict(), ckpt_path)
             logger.info(f"  ✅ En iyi RoBERTa modeli kaydedildi → {ckpt_path}")
+        else:
+            patience_count += 1
+            logger.info(f"  ⚠️  Val loss iyileşmedi ({patience_count}/{patience})")
+            if patience_count >= patience:
+                logger.info("  🛑 Early stopping devreye girdi — eğitim erken sonlandırılıyor.")
+                break
 
     logger.info("🎉 RoBERTa eğitimi tamamlandı.")
 

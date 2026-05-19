@@ -46,10 +46,11 @@
                         <div class="form-group">
                             <label for="model_type">Analiz Modeli</label>
                             <select id="model_type" name="model_type">
-                                <option value="roberta">RoBERTa (En Güçlü Derin Öğrenme)</option>
-                                <option value="distilbert">DistilBERT (Hızlı Derin Öğrenme)</option>
-                                <option value="lr">Logistic Regression (Geleneksel ML)</option>
-                                <option value="dt">Decision Tree (Karar Ağacı - Düşük Başarı)</option>
+                                <option value="roberta">RoBERTa</option>
+                                <option value="distilbert">DistilBERT</option>
+                                <option value="lr">Logistic Regression</option>
+                                <option value="dt">Decision Tree</option>
+                                <option value="all">Tüm Modeller (Karşılaştırmalı)</option>
                             </select>
                         </div>
                         
@@ -84,6 +85,14 @@
                     </div>
                     <div class="details" id="result-details">
                         <!-- Probabilities -->
+                    </div>
+                </div>
+
+                <!-- Multi-Result Container -->
+                <div id="multi-result-container" class="glass-card result-card hidden">
+                    <h3 class="result-title" style="margin-bottom: 2rem;">Karşılaştırmalı Analiz Sonuçları</h3>
+                    <div class="multi-results-grid" id="multi-results-grid">
+                        <!-- Dynamically populated via JS -->
                     </div>
                 </div>
             </section>
