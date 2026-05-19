@@ -1,9 +1,3 @@
-"""
-Modern Transformer Modeli Eğitimi: RoBERTa
-
-Kullanım:
-    python3 -m src.train_roberta
-"""
 import logging
 import os
 from pathlib import Path
@@ -27,19 +21,18 @@ from src.dataset import WELFakeDataset
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# Eğer CUDA (GPU) aktifse ekran kartını kullan, yoksa CPU ile devam et
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# RoBERTa için Özel Dizinler
 ROBERTA_MODEL_NAME = "roberta-base"
 ROBERTA_SAVE_DIR = MODELS_DIR / "roberta_saved_model"
 ROBERTA_TOKENIZER_DIR = MODELS_DIR / "roberta_tokenizer"
+
 
 class RobertaFakeNewsClassifier(nn.Module):
     def __init__(self, pretrained: str = ROBERTA_MODEL_NAME, num_classes: int = 2, dropout: float = 0.3):
         super().__init__()
         self.roberta = AutoModel.from_pretrained(pretrained)
-        hidden_size = self.roberta.config.hidden_size # 768
+        hidden_size = self.roberta.config.hidden_size
 
         self.classifier = nn.Sequential(
             nn.Dropout(dropout),
@@ -51,13 +44,14 @@ class RobertaFakeNewsClassifier(nn.Module):
 
     def forward(self, input_ids, attention_mask):
         outputs = self.roberta(input_ids=input_ids, attention_mask=attention_mask)
-        # RoBERTa'da da [CLS] token'ı 0. indistir (fakat özel token adı <s> dir)
         cls_token = outputs.last_hidden_state[:, 0, :]
         logits = self.classifier(cls_token)
         return logits
 
+
 def accuracy(preds, labels):
     return (preds.argmax(dim=1) == labels).float().mean().item()
+
 
 def train_epoch(model, loader, optimizer, scheduler, criterion, epoch):
     model.train()
@@ -85,6 +79,7 @@ def train_epoch(model, loader, optimizer, scheduler, criterion, epoch):
     n = len(loader)
     return total_loss / n, total_acc / n
 
+
 @torch.no_grad()
 def eval_epoch(model, loader, criterion, epoch):
     model.eval()
@@ -105,6 +100,7 @@ def eval_epoch(model, loader, criterion, epoch):
     n = len(loader)
     return total_loss / n, total_acc / n
 
+
 def main():
     logger.info(f"=== RoBERTa Eğitim Döngüsü Başlıyor ===")
     logger.info(f"Cihaz: {DEVICE}")
@@ -123,7 +119,7 @@ def main():
     logger.info("Yapay zeka modeli (RoBERTa-base) yükleniyor (Yaklaşık 500 MB)...")
     model = RobertaFakeNewsClassifier().to(DEVICE)
 
-    optimizer = AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=0.05)  # 0.01 → 0.05: daha güçlü L2 regularization
+    optimizer = AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=0.05)
     total_steps  = len(train_loader) * EPOCHS
     warmup_steps = int(0.1 * total_steps)
     scheduler = get_linear_schedule_with_warmup(
@@ -134,7 +130,6 @@ def main():
     best_val_loss = float("inf")
     ROBERTA_SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Early Stopping parametreleri
     patience       = 2
     patience_count = 0
 
@@ -162,6 +157,7 @@ def main():
                 break
 
     logger.info("🎉 RoBERTa eğitimi tamamlandı.")
+
 
 if __name__ == "__main__":
     main()

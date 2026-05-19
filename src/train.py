@@ -1,13 +1,7 @@
-"""
-Model eğitim döngüsü.
-
-Kullanım:
-    python -m src.train
-"""
 import logging
 from pathlib import Path
-
 import os
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 import torch
@@ -27,11 +21,9 @@ from src.model import FakeNewsClassifier
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
-# Eğer CUDA (GPU) aktifse ekran kartını kullan, yoksa CPU ile devam et
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-# ─── Yardımcı Fonksiyonlar ───────────────────────────────────────────────────
 
 def accuracy(preds, labels):
     return (preds.argmax(dim=1) == labels).float().mean().item()
@@ -59,7 +51,6 @@ def train_epoch(model, loader, optimizer, scheduler, criterion, epoch):
         total_loss += loss.item()
         total_acc  += accuracy(logits.detach(), lbls)
         
-        # Progress bar'a güncel loss değerini yaz
         pbar.set_postfix({"loss": f"{loss.item():.4f}"})
 
     n = len(loader)
@@ -87,12 +78,9 @@ def eval_epoch(model, loader, criterion, epoch):
     return total_loss / n, total_acc / n
 
 
-# ─── Ana Eğitim Fonksiyonu ───────────────────────────────────────────────────
-
 def main():
     logger.info(f"Cihaz: {DEVICE}")
 
-    # Tokenizer
     tokenizer = DistilBertTokenizer.from_pretrained(PRETRAINED_MODEL)
     TOKENIZER_DIR.mkdir(parents=True, exist_ok=True)
     tokenizer.save_pretrained(str(TOKENIZER_DIR))
@@ -110,14 +98,10 @@ def main():
     logger.info("Yapay zeka modeli (DistilBERT) yükleniyor / indiriliyor (Yaklaşık 260 MB)...")
     model = FakeNewsClassifier().to(DEVICE)
 
-    # ─── Layer Freeze: Hız için ilk katmanları dondur ─────────────────────────
-    # DistilBERT'in embedding + ilk 4 transformer bloğunu dondur.
-    # Sadece son 2 blok (layer.4, layer.5) + classifier eğitilir.
-    # Bu sayede ~2-3x hız kazancı sağlanır, doğruluk kaybı minimumdur.
     for param in model.bert.embeddings.parameters():
         param.requires_grad = False
     for i, block in enumerate(model.bert.transformer.layer):
-        if i < 4:   # 0,1,2,3 → dondur | 4,5 → eğit
+        if i < 4:
             for param in block.parameters():
                 param.requires_grad = False
 
@@ -125,8 +109,6 @@ def main():
     total     = sum(p.numel() for p in model.parameters())
     logger.info(f"Eğitilecek parametre: {trainable:,} / {total:,} ({100*trainable/total:.1f}%)")
 
-
-    # Optimizer — sadece eğitilecek (requires_grad=True) parametreler
     optimizer = AdamW(
         filter(lambda p: p.requires_grad, model.parameters()),
         lr=LEARNING_RATE,
@@ -139,12 +121,10 @@ def main():
     )
     criterion = nn.CrossEntropyLoss()
 
-    # ─── Eğitim Döngüsü ──────────────────────────────────────────────────────
     best_val_loss = float("inf")
     MODEL_SAVE_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Early Stopping parametreleri
-    patience       = 2   # Val loss kaç epoch üst üste artarsa eğitimi durdur
+    patience       = 2
     patience_count = 0
 
     for epoch in range(1, EPOCHS + 1):
