@@ -397,7 +397,7 @@ textarea {
 /* History Section */
 .charts-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 2rem;
     margin-bottom: 2rem;
 }
@@ -443,9 +443,13 @@ textarea {
     border-radius: 50px;
     font-size: 0.85rem;
     font-weight: bold;
+    display: inline-block;
 }
 .badge-fake { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
 .badge-real { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+.badge-success { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.badge-fail { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+.badge-neutral { background: rgba(255, 255, 255, 0.08); color: var(--text-secondary); border: 1px solid rgba(255, 255, 255, 0.15); }
 
 /* --- Multi-Model Results Grid & Cards --- */
 .multi-results-grid {
@@ -561,4 +565,43 @@ textarea {
 
 .model-progress-fill.real-fill {
     background: var(--success);
+}
+
+/* Model-Specific Small Charts Row */
+.model-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+    width: 100%;
+}
+
+.model-chart-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 20px;
+    padding: 1.5rem 1.25rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+}
+
+.model-chart-box:hover {
+    transform: translateY(-4px);
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.model-chart-box h4 {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-family: var(--font-heading);
+    font-weight: 600;
+}
+
+.canvas-wrapper-small {
+    position: relative;
+    height: 180px;
+    width: 100%;
 }

@@ -26,7 +26,6 @@
             </div>
             <ul class="nav-links">
                 <li><button class="nav-btn active" data-target="test-section">Haber Analizi</button></li>
-                <li><button class="nav-btn" data-target="dashboard-section">Model Dashboard</button></li>
                 <li><button class="nav-btn" data-target="history-section">Geçmiş Analizler</button></li>
             </ul>
         </nav>
@@ -64,6 +63,14 @@
                             <textarea id="text" name="text" rows="8" placeholder="Doğruluğunu teyit etmek istediğiniz haber metnini buraya yapıştırın..." required></textarea>
                         </div>
 
+                        <div class="form-group">
+                            <label for="true_label">Gerçek Haber Durumu (Grafik Analizi İçin Yer Bilgisi)</label>
+                            <select id="true_label" name="true_label">
+                                <option value="GERÇEK">Gerçek Haber (REAL)</option>
+                                <option value="SAHTE">Sahte Haber (FAKE)</option>
+                            </select>
+                        </div>
+
                         <button type="submit" class="primary-btn" id="analyze-btn">
                             <span class="btn-text">Analiz Et</span>
                             <div class="spinner hidden"></div>
@@ -97,52 +104,7 @@
                 </div>
             </section>
 
-            <!-- DASHBOARD SECTION -->
-            <section id="dashboard-section" class="tab-content">
-                <header>
-                    <h2>Model Dashboard</h2>
-                    <p>Önceki eğitimlerde elde edilmiş model performans metrikleri ve karmaşıklık matrisi grafikleri.</p>
-                </header>
-
-                <div class="dashboard-grid">
-                    <!-- RoBERTa Card -->
-                    <div class="glass-card dash-card">
-                        <h3>RoBERTa Modeli</h3>
-                        <div class="image-wrapper">
-                            <!-- Backend'deki /figures klasöründen -->
-                            <img src="/figures/confusion_matrix_roberta.png" alt="RoBERTa Confusion Matrix" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyYWZpayBCdWx1bmFtYWTEsTwvdGV4dD48L3N2Zz4='">
-                        </div>
-                        <p class="desc">Transformer Tabanlı Gelişmiş Model</p>
-                    </div>
-
-                    <!-- DistilBERT Card -->
-                    <div class="glass-card dash-card">
-                        <h3>DistilBERT Modeli</h3>
-                        <div class="image-wrapper">
-                            <img src="/figures/confusion_matrix.png" alt="DistilBERT Confusion Matrix" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyYWZpayBCdWx1bmFtYWTEsTwvdGV4dD48L3N2Zz4='">
-                        </div>
-                        <p class="desc">Hızlı ve Etkili Transformer Modeli</p>
-                    </div>
-
-                    <!-- Logistic Regression Card -->
-                    <div class="glass-card dash-card">
-                        <h3>Logistic Regression</h3>
-                        <div class="image-wrapper">
-                            <img src="/figures/confusion_matrix_lr.png" alt="LR Confusion Matrix" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyYWZpayBCdWx1bmFtYWTEsTwvdGV4dD48L3N2Zz4='">
-                        </div>
-                        <p class="desc">Geleneksel Makine Öğrenmesi</p>
-                    </div>
-
-                    <!-- Decision Tree Card -->
-                    <div class="glass-card dash-card">
-                        <h3>Decision Tree</h3>
-                        <div class="image-wrapper">
-                            <img src="/figures/confusion_matrix_dt.png" alt="Decision Tree Confusion Matrix" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZmlsbD0iI2ZmZiIgZHk9Ii4zZW0iIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyYWZpayBCdWx1bmFtYWTEsTwvdGV4dD48L3N2Zz4='">
-                        </div>
-                        <p class="desc">Zayıf Sınıflandırıcı (Kıyaslama Amaçlı)</p>
-                    </div>
-                </div>
-            </section>
+            <!-- DASHBOARD SECTION REMOVED -->
 
             <!-- HISTORY SECTION -->
             <section id="history-section" class="tab-content">
@@ -154,7 +116,7 @@
                 <!-- Charts Container -->
                 <div class="charts-container">
                     <div class="glass-card chart-card">
-                        <h3>Genel Analiz Dağılımı</h3>
+                        <h3>Genel Tahmin Dağılımı</h3>
                         <div class="canvas-wrapper">
                             <canvas id="pieChart"></canvas>
                         </div>
@@ -163,6 +125,39 @@
                         <h3>Model Kullanım İstatistikleri</h3>
                         <div class="canvas-wrapper">
                             <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Bazlı Canlı Başarı Analizi (%) (X-Y Zaman Grafikleri) -->
+                <div class="glass-card performance-section" style="margin-bottom: 2rem; padding: 2rem;">
+                    <h3 style="margin-bottom: 1.5rem; text-align: center; color: var(--text-primary); font-family: var(--font-heading); font-size: 1.5rem;">
+                        Model Bazlı Canlı Başarı Eğrileri (%) (X-Y Zaman Grafikleri)
+                    </h3>
+                    <div class="model-charts-grid">
+                        <div class="model-chart-box">
+                            <h4>RoBERTa Başarı Eğrisi</h4>
+                            <div class="canvas-wrapper-small">
+                                <canvas id="robertaChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="model-chart-box">
+                            <h4>DistilBERT Başarı Eğrisi</h4>
+                            <div class="canvas-wrapper-small">
+                                <canvas id="distilbertChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="model-chart-box">
+                            <h4>Logistic Regression Başarı Eğrisi</h4>
+                            <div class="canvas-wrapper-small">
+                                <canvas id="lrChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="model-chart-box">
+                            <h4>Decision Tree Başarı Eğrisi</h4>
+                            <div class="canvas-wrapper-small">
+                                <canvas id="dtChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -176,8 +171,10 @@
                                     <th>Tarih</th>
                                     <th>Model</th>
                                     <th>Haber Başlığı</th>
-                                    <th>Sonuç</th>
+                                    <th>Yer Bilgisi (Gerçek)</th>
+                                    <th>Model Tahmini</th>
                                     <th>Güven Skoru</th>
+                                    <th>Eşleşme Durumu</th>
                                 </tr>
                             </thead>
                             <tbody id="history-table-body">

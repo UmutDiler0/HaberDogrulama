@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const requestData = {
             model_type: formData.get('model_type'),
             title: formData.get('title'),
-            text: formData.get('text')
+            text: formData.get('text'),
+            true_label: formData.get('true_label')
         };
 
         // UI Loading State
@@ -78,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         body: JSON.stringify({
                             model_type: mKey,
                             title: requestData.title,
-                            text: requestData.text
+                            text: requestData.text,
+                            true_label: requestData.true_label
                         })
                     }).then(async (res) => {
                         const data = await res.json();
@@ -186,6 +188,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- History Logic & Charts ---
     let pieChartInstance = null;
     let barChartInstance = null;
+    let robertaChartInstance = null;
+    let distilbertChartInstance = null;
+    let lrChartInstance = null;
+    let dtChartInstance = null;
 
     async function loadHistory() {
         try {
@@ -199,31 +205,81 @@ document.addEventListener('DOMContentLoaded', () => {
             let realCount = 0;
             const modelCounts = { 'roberta': 0, 'distilbert': 0, 'lr': 0, 'dt': 0 };
             
+            // Populate Table & basic counts
             data.forEach(row => {
-                // Table Populating
                 const tr = document.createElement('tr');
-                const isFake = row.label.toLowerCase().includes('sahte');
+                const isPredictionFake = row.label.toLowerCase().includes('sahte');
+                
+                let trueLabelBadge = '';
+                let matchBadge = '';
+                
+                if (row.true_label) {
+                    const isTrueFake = row.true_label.toLowerCase().includes('sahte');
+                    trueLabelBadge = `<span class="badge ${isTrueFake ? 'badge-fake' : 'badge-real'}">${row.true_label}</span>`;
+                    
+                    const isCorrect = row.label.trim().toUpperCase() === row.true_label.trim().toUpperCase();
+                    matchBadge = `<span class="badge ${isCorrect ? 'badge-success' : 'badge-fail'}">${isCorrect ? 'DOĞRU' : 'HATALI'}</span>`;
+                } else {
+                    trueLabelBadge = `<span class="badge badge-neutral">Belirsiz</span>`;
+                    matchBadge = `<span class="badge badge-neutral">Belirsiz</span>`;
+                }
+
+                const predictionBadge = `<span class="badge ${isPredictionFake ? 'badge-fake' : 'badge-real'}">${row.label}</span>`;
+
                 tr.innerHTML = `
                     <td>${row.timestamp}</td>
                     <td><span class="badge" style="background:#4f46e5;color:white;">${row.model_type.toUpperCase()}</span></td>
                     <td>${row.title.substring(0, 40)}${row.title.length > 40 ? '...' : ''}</td>
-                    <td><span class="badge ${isFake ? 'badge-fake' : 'badge-real'}">${row.label}</span></td>
+                    <td>${trueLabelBadge}</td>
+                    <td>${predictionBadge}</td>
                     <td>%${row.confidence}</td>
+                    <td>${matchBadge}</td>
                 `;
                 tbody.appendChild(tr);
                 
-                // Stats Calculating
-                if(isFake) fakeCount++; else realCount++;
+                if(isPredictionFake) fakeCount++; else realCount++;
                 if(modelCounts[row.model_type] !== undefined) modelCounts[row.model_type]++;
             });
             
-            renderCharts(fakeCount, realCount, modelCounts);
+            // Calculate chronological running accuracies for each model individually
+            const chronologicalData = [...data].reverse();
+            const modelSuccess = {
+                'roberta': { runningCorrect: 0, runningTotal: 0, timelineAcc: [], timelineLabels: [] },
+                'distilbert': { runningCorrect: 0, runningTotal: 0, timelineAcc: [], timelineLabels: [] },
+                'lr': { runningCorrect: 0, runningTotal: 0, timelineAcc: [], timelineLabels: [] },
+                'dt': { runningCorrect: 0, runningTotal: 0, timelineAcc: [], timelineLabels: [] }
+            };
+
+            chronologicalData.forEach(row => {
+                const modelKey = row.model_type.toLowerCase();
+                if (row.true_label && modelSuccess[modelKey]) {
+                    const isCorrect = row.label.trim().toUpperCase() === row.true_label.trim().toUpperCase();
+                    const stats = modelSuccess[modelKey];
+                    stats.runningTotal++;
+                    if (isCorrect) stats.runningCorrect++;
+                    
+                    const runningAcc = Math.round((stats.runningCorrect / stats.runningTotal) * 100);
+                    stats.timelineAcc.push(runningAcc);
+                    stats.timelineLabels.push('T' + stats.runningTotal);
+                }
+            });
+
+            // Fallback for empty data
+            const modelsKeys = ['roberta', 'distilbert', 'lr', 'dt'];
+            modelsKeys.forEach(mKey => {
+                if (modelSuccess[mKey].timelineAcc.length === 0) {
+                    modelSuccess[mKey].timelineAcc = [0];
+                    modelSuccess[mKey].timelineLabels = ['Test Yok'];
+                }
+            });
+            
+            renderCharts(fakeCount, realCount, modelCounts, modelSuccess);
         } catch (err) {
             console.error("Geçmiş veriler yüklenemedi:", err);
         }
     }
     
-    function renderCharts(fake, real, models) {
+    function renderCharts(fake, real, models, modelSuccess) {
         Chart.defaults.color = '#94a3b8'; // Dark mode text color
         
         // Pie Chart
@@ -232,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pieChartInstance = new Chart(pieCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Sahte Haber', 'Gerçek Haber'],
+                labels: ['Sahte Tahmin', 'Gerçek Tahmin'],
                 datasets: [{
                     data: [fake, real],
                     backgroundColor: ['#ef4444', '#10b981'],
@@ -264,6 +320,92 @@ document.addEventListener('DOMContentLoaded', () => {
                     y: { beginAtZero: true, ticks: { stepSize: 1 } }
                 }
             }
+        });
+
+        // 4 Separate X-Y Running Accuracy Line Charts
+        const chartConfigs = [
+            { id: 'robertaChart', key: 'roberta', color: '#a855f7', fill: 'rgba(168, 85, 247, 0.08)', instanceName: 'robertaChartInstance' },
+            { id: 'distilbertChart', key: 'distilbert', color: '#6366f1', fill: 'rgba(99, 102, 241, 0.08)', instanceName: 'distilbertChartInstance' },
+            { id: 'lrChart', key: 'lr', color: '#10b981', fill: 'rgba(16, 185, 129, 0.08)', instanceName: 'lrChartInstance' },
+            { id: 'dtChart', key: 'dt', color: '#f97316', fill: 'rgba(249, 115, 22, 0.08)', instanceName: 'dtChartInstance' }
+        ];
+
+        // Global Chart Instances management
+        const chartInstances = {
+            robertaChartInstance,
+            distilbertChartInstance,
+            lrChartInstance,
+            dtChartInstance
+        };
+
+        chartConfigs.forEach(cfg => {
+            const canvasEl = document.getElementById(cfg.id);
+            if (!canvasEl) return;
+            const ctx = canvasEl.getContext('2d');
+            
+            // Destroy existing instance safely
+            if (cfg.instanceName === 'robertaChartInstance' && robertaChartInstance) robertaChartInstance.destroy();
+            else if (cfg.instanceName === 'distilbertChartInstance' && distilbertChartInstance) distilbertChartInstance.destroy();
+            else if (cfg.instanceName === 'lrChartInstance' && lrChartInstance) lrChartInstance.destroy();
+            else if (cfg.instanceName === 'dtChartInstance' && dtChartInstance) dtChartInstance.destroy();
+            
+            const stats = modelSuccess[cfg.key];
+            
+            const newChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: stats.timelineLabels,
+                    datasets: [{
+                        label: 'Başarı Oranı',
+                        data: stats.timelineAcc,
+                        borderColor: cfg.color,
+                        backgroundColor: cfg.fill,
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: cfg.color,
+                        pointBorderColor: '#fff',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                            ticks: { color: '#94a3b8', font: { size: 9 } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                            ticks: {
+                                color: '#94a3b8',
+                                font: { size: 9 },
+                                callback: function(value) { return '%' + value; }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' Başarı: %' + context.parsed.y;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Assign new instance reference
+            if (cfg.instanceName === 'robertaChartInstance') robertaChartInstance = newChart;
+            else if (cfg.instanceName === 'distilbertChartInstance') distilbertChartInstance = newChart;
+            else if (cfg.instanceName === 'lrChartInstance') lrChartInstance = newChart;
+            else if (cfg.instanceName === 'dtChartInstance') dtChartInstance = newChart;
         });
     }
 

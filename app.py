@@ -16,9 +16,14 @@ def init_db():
             model_type TEXT,
             title TEXT,
             label TEXT,
-            confidence REAL
+            confidence REAL,
+            true_label TEXT
         )
     ''')
+    try:
+        c.execute("ALTER TABLE predictions ADD COLUMN true_label TEXT")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -149,6 +154,7 @@ def api_predict():
     model_type = data.get("model_type", "distilbert")
     title = data.get("title", "")
     text = data.get("text", "")
+    true_label = data.get("true_label", None)
     
     if not text:
         return jsonify({"error": "Metin (text) alanı zorunludur."}), 400
@@ -177,8 +183,8 @@ def api_predict():
                     conn = sqlite3.connect('history.db')
                     c = conn.cursor()
                     c.execute(
-                        "INSERT INTO predictions (timestamp, model_type, title, label, confidence) VALUES (?, ?, ?, ?, ?)",
-                        (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), m_type, title if title else "Başlıksız", res["label"], res["confidence"])
+                        "INSERT INTO predictions (timestamp, model_type, title, label, confidence, true_label) VALUES (?, ?, ?, ?, ?, ?)",
+                        (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), m_type, title if title else "Başlıksız", res["label"], res["confidence"], true_label)
                     )
                     conn.commit()
                     conn.close()
@@ -207,8 +213,8 @@ def api_predict():
             conn = sqlite3.connect('history.db')
             c = conn.cursor()
             c.execute(
-                "INSERT INTO predictions (timestamp, model_type, title, label, confidence) VALUES (?, ?, ?, ?, ?)",
-                (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), model_type, title if title else "Başlıksız", res["label"], res["confidence"])
+                "INSERT INTO predictions (timestamp, model_type, title, label, confidence, true_label) VALUES (?, ?, ?, ?, ?, ?)",
+                (datetime.now().strftime("%Y-%m-%d %H:%M:%S"), model_type, title if title else "Başlıksız", res["label"], res["confidence"], true_label)
             )
             conn.commit()
             conn.close()
